@@ -1,129 +1,101 @@
 import { Scene } from "phaser";
 
+// Movement type
+type Movement = {
+  key: Phaser.Input.Keyboard.Key;
+  x: number;
+  y: number;
+  anim: string;
+};
+
 export class Game extends Scene {
-  //   private player: Phaser.GameObjects.Rectangle;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private direction: "left" | "right" | "up" | "down" = "down";
-  private platforms;
+  private platforms: Phaser.Physics.Arcade.StaticGroup;
+  private movements: Movement[]; // Mapped movement controls
+  private VELOCITY = 160; // Constant velocity
 
   constructor() {
     super("Game");
   }
 
+  // Load assets
   preload() {
     this.load.setPath("assets");
     this.load.image("ground", "platform.png");
-
     this.load.spritesheet("hero", "character_base_48x48.png", {
       frameWidth: 48,
       frameHeight: 48,
     });
   }
 
+  // Static
   create() {
-    // controls
-    this.cursors = this.input.keyboard?.createCursorKeys();
+    // Create controls
+    this.cursors = this.input.keyboard!.createCursorKeys();
 
-    // create platforms
+    // Setup movement mappings
+    this.movements = [
+      { key: this.cursors.left, x: -1, y: 0, anim: "left" },
+      { key: this.cursors.right, x: 1, y: 0, anim: "right" },
+      { key: this.cursors.up, x: 0, y: -1, anim: "up" },
+      { key: this.cursors.down, x: 0, y: 1, anim: "down" },
+    ];
+
+    // Create platforms
     this.platforms = this.physics.add.staticGroup();
-
     this.platforms.create(400, 700, "ground").setScale(2).refreshBody();
 
-    // create player
+    // Create player
     this.player = this.physics.add.sprite(300, 450, "hero");
     this.player.setBounce(0.2);
     this.player.setCollideWorldBounds(true);
 
-    // anim player
-    this.anims.create({
-      key: "left",
-      frames: this.anims.generateFrameNumbers("hero", { start: 12, end: 15 }),
-      frameRate: 10,
-    });
-    this.anims.create({
-      key: "right",
-      frames: this.anims.generateFrameNumbers("hero", { start: 8, end: 11 }),
-      frameRate: 10,
-    });
-    this.anims.create({
-      key: "up",
-      frames: this.anims.generateFrameNumbers("hero", { start: 4, end: 7 }),
-      frameRate: 10,
-    });
-    this.anims.create({
-      key: "down",
-      frames: this.anims.generateFrameNumbers("hero", { start: 0, end: 3 }),
-      frameRate: 10,
+    // Store animations data
+    const animsData = [
+      { key: "left", frames: { start: 12, end: 15 } },
+      { key: "right", frames: { start: 8, end: 11 } },
+      { key: "up", frames: { start: 4, end: 7 } },
+      { key: "down", frames: { start: 0, end: 3 } },
+      { key: "turn_l", frames: { frames: [12] } },
+      { key: "turn_r", frames: { frames: [8] } },
+      { key: "turn_u", frames: { frames: [4] } },
+      { key: "turn_d", frames: { frames: [0] } },
+    ];
+
+    // Create animations
+    animsData.forEach((anim) => {
+      this.anims.create({
+        key: anim.key,
+        frames: this.anims.generateFrameNumbers("hero", anim.frames),
+        frameRate: 10,
+      });
     });
 
-    this.anims.create({
-      key: "turn_l",
-      frames: [{ key: "hero", frame: 12 }],
-      frameRate: 10,
-    });
-    this.anims.create({
-      key: "turn_r",
-      frames: [{ key: "hero", frame: 8 }],
-      frameRate: 10,
-    });
-    this.anims.create({
-      key: "turn_u",
-      frames: [{ key: "hero", frame: 4 }],
-      frameRate: 10,
-    });
-    this.anims.create({
-      key: "turn_d",
-      frames: [{ key: "hero", frame: 0 }],
-      frameRate: 10,
-    });
-
-    // platform + player
+    // Add collisions
     this.physics.add.collider(this.player, this.platforms);
   }
 
+  // Update = requestAnimationFrame
   update(): void {
-    const VELOCITY = 160;
+    let moved = false;
 
-    switch (true) {
-      case this.cursors.left.isDown:
-        this.player.setVelocityX(-VELOCITY);
-        this.player.setVelocityY(0);
-
-        this.direction = "left";
-        this.player.anims.play(this.direction, true);
-        break;
-      case this.cursors.right.isDown:
-        this.player.setVelocityX(+VELOCITY);
-        this.player.setVelocityY(0);
-
-        this.direction = "right";
-        this.player.anims.play(this.direction, true);
-        break;
-      case this.cursors.up.isDown:
-        this.player.setVelocityY(-VELOCITY);
-        this.player.setVelocityX(0);
-
-        this.direction = "up";
-        this.player.anims.play(this.direction, true);
-        break;
-      case this.cursors.down.isDown:
-        this.player.setVelocityY(+VELOCITY);
-        this.player.setVelocityX(0);
-
-        this.direction = "down";
-        this.player.anims.play(this.direction, true);
-        break;
-      default:
-        this.player.setVelocityX(0);
-        this.player.setVelocityY(0);
-
-        this.player.anims.play("turn_" + this.direction[0], true);
-        break;
+    // Check all movement options
+    for (const move of this.movements) {
+      if (move.key.isDown) {
+        this.player.setVelocity(move.x * this.VELOCITY, move.y * this.VELOCITY);
+        this.direction = move.anim as typeof this.direction;
+        this.player.anims.play(move.anim, true);
+        moved = true;
+        break; // Prioritize first pressed direction
+      }
     }
 
-    // if (this.cursors.up.isDown && this.player.body.touching.down) {
-    //   this.player_two.setVelocityY(-330);
-    // }
+    // Handle idle state
+    if (!moved) {
+      this.player.setVelocity(0, 0);
+      this.player.anims.play(`turn_${this.direction[0]}`, true);
+    }
   }
 }
