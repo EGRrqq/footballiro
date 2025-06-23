@@ -1,20 +1,16 @@
 import { Scene } from "phaser";
 
-// Movement type
-type Movement = {
-  key: Phaser.Input.Keyboard.Key;
-  x: number;
-  y: number;
-  anim: string;
-};
+// Character direction type
+type Direction = "left" | "right" | "up" | "down";
 
 export class Game extends Scene {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-  private direction: "left" | "right" | "up" | "down" = "down";
+  private direction: Direction = "down";
   private platforms: Phaser.Physics.Arcade.StaticGroup;
-  private movements: Movement[]; // Mapped movement controls
-  private VELOCITY = 160; // Constant velocity
+
+  // Constants
+  private readonly VELOCITY = 160;
 
   constructor() {
     super("Game");
@@ -34,14 +30,6 @@ export class Game extends Scene {
   create() {
     // Create controls
     this.cursors = this.input.keyboard!.createCursorKeys();
-
-    // Setup movement mappings
-    this.movements = [
-      { key: this.cursors.left, x: -1, y: 0, anim: "left" },
-      { key: this.cursors.right, x: 1, y: 0, anim: "right" },
-      { key: this.cursors.up, x: 0, y: -1, anim: "up" },
-      { key: this.cursors.down, x: 0, y: 1, anim: "down" },
-    ];
 
     // Create platforms
     this.platforms = this.physics.add.staticGroup();
@@ -79,21 +67,31 @@ export class Game extends Scene {
 
   // Update = requestAnimationFrame
   update(): void {
-    let moved = false;
+    // Create movement vector
+    const movement = new Phaser.Math.Vector2(0, 0);
 
-    // Check all movement options
-    for (const move of this.movements) {
-      if (move.key.isDown) {
-        this.player.setVelocity(move.x * this.VELOCITY, move.y * this.VELOCITY);
-        this.direction = move.anim as typeof this.direction;
-        this.player.anims.play(move.anim, true);
-        moved = true;
-        break; // Prioritize first pressed direction
-      }
+    // Apply direction inputs to vector
+    if (this.cursors.left?.isDown) movement.x -= 1;
+    if (this.cursors.right?.isDown) movement.x += 1;
+    if (this.cursors.up?.isDown) movement.y -= 1;
+    if (this.cursors.down?.isDown) movement.y += 1;
+
+    // Handle movement
+    if (movement.length() > 0) {
+      // Normalize and scale vector for consistent diagonal speed
+      movement.normalize().scale(this.VELOCITY);
+      this.player.setVelocity(movement.x, movement.y);
+
+      // Determine primary direction for animation (prioritize horizontal)
+      if (movement.x < 0) this.direction = "left";
+      else if (movement.x > 0) this.direction = "right";
+      else if (movement.y < 0) this.direction = "up";
+      else if (movement.y > 0) this.direction = "down";
+
+      this.player.anims.play(this.direction, true);
     }
-
     // Handle idle state
-    if (!moved) {
+    else {
       this.player.setVelocity(0, 0);
       this.player.anims.play(`turn_${this.direction[0]}`, true);
     }
