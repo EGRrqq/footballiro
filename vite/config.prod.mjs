@@ -17,7 +17,7 @@ const phasermsg = () => {
 }   
 
 export default defineConfig({
-    base: './footballiro/',
+    base: './',
     logLevel: 'warning',
     build: {
         rollupOptions: {
