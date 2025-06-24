@@ -8,8 +8,10 @@ export class Game extends Scene {
   private hero: Phaser.Physics.Matter.Sprite;
   private direction: Direction = "down";
   private camera: Phaser.Cameras.Scene2D.Camera;
+
   private trophy: Phaser.Physics.Matter.Image;
   private interactText: Phaser.GameObjects.Text;
+  private interactKey: Phaser.Input.Keyboard.Key;
 
   // Constants
   private readonly VELOCITY = 10;
@@ -38,6 +40,30 @@ export class Game extends Scene {
     return wall;
   }
 
+  private collectTrophy() {
+    // Create a simple collection effect
+    const effect = this.add
+      .image(this.trophy.x, this.trophy.y, "trophy")
+      .setDepth(1000)
+      .setScale(1.5);
+
+    // Animate the trophy collection
+    this.tweens.add({
+      targets: effect,
+      y: effect.y - 100,
+      alpha: 0,
+      scale: 2,
+      duration: 500,
+      ease: "Cubic.easeOut",
+      onComplete: () => effect.destroy(),
+    });
+
+    // Remove the actual trophy
+    this.trophy.destroy();
+    this.trophy = null!; // Mark as collected
+    this.interactText.setVisible(false);
+  }
+
   private handleTrophyInteraction() {
     if (!this.trophy) return;
 
@@ -54,6 +80,11 @@ export class Game extends Scene {
       // Position text above characters head
       this.interactText.setPosition(this.hero.x, this.hero.y - 40);
       this.interactText.setVisible(true);
+
+      // Handle interaction
+      if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+        this.collectTrophy();
+      }
     } else {
       this.interactText.setVisible(false);
     }
@@ -144,6 +175,11 @@ export class Game extends Scene {
       .setDepth(1000) // Ensure it's on top
       .setVisible(false)
       .setOrigin(0.5, 1); // Center bottom origin
+
+    // Create interact key
+    this.interactKey = this.input.keyboard!.addKey(
+      Phaser.Input.Keyboard.KeyCodes.X
+    );
 
     // Create player
     this.hero = this.matter.add.sprite(1500, 200, "hero", undefined, {
