@@ -7,7 +7,6 @@ export class Game extends Scene {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private hero: Phaser.Physics.Matter.Sprite;
   private direction: Direction = "down";
-  private walls: Phaser.Physics.Matter.Image[] = [];
   private camera: Phaser.Cameras.Scene2D.Camera;
 
   // Constants
@@ -19,6 +18,21 @@ export class Game extends Scene {
 
   constructor() {
     super("Game");
+  }
+
+  private createWall(
+    x: number,
+    y: number,
+    angle: number,
+    scale: number
+  ): Phaser.Physics.Matter.Image {
+    const wall = this.matter.add.image(x, y, "wall", undefined, {
+      isStatic: true,
+    });
+    wall.setAngle(angle);
+    wall.scale = scale;
+
+    return wall;
   }
 
   // Load assets
@@ -41,77 +55,21 @@ export class Game extends Scene {
     this.cursors = this.input.keyboard!.createCursorKeys();
 
     // Create platforms
-    const l_wall_one = this.matter.add.image(400, 50, "wall", undefined, {
-      isStatic: true, // Makes platform immovable
-    });
-    l_wall_one.scale = 2;
-    l_wall_one.setAngle(90);
+    this.createWall(400, 50, 90, 2);
+    this.createWall(400, 1150, 90, 2);
+    this.createWall(400, 2250, 90, 2);
 
-    const l_wall_two = this.matter.add.image(400, 1150, "wall", undefined, {
-      isStatic: true,
-    });
-    l_wall_two.scale = 2;
-    l_wall_two.setAngle(90);
+    this.createWall(2600, 50, 90, 2);
+    this.createWall(2600, 1150, 90, 2);
+    this.createWall(2600, 2250, 90, 2);
 
-    const l_wall_th = this.matter.add.image(400, 2250, "wall", undefined, {
-      isStatic: true,
-    });
-    l_wall_th.scale = 2;
-    l_wall_th.setAngle(90);
+    this.createWall(800, 25, 0, 2);
+    this.createWall(1600, 25, 0, 2);
+    this.createWall(2200, 25, 0, 2);
 
-    //
-
-    const r_wall_one = this.matter.add.image(2600, 50, "wall", undefined, {
-      isStatic: true,
-    });
-    r_wall_one.scale = 2;
-    r_wall_one.setAngle(90);
-
-    const r_wall_two = this.matter.add.image(2600, 1150, "wall", undefined, {
-      isStatic: true,
-    });
-    r_wall_two.scale = 2;
-    r_wall_two.setAngle(90);
-
-    const r_wall_th = this.matter.add.image(2600, 2250, "wall", undefined, {
-      isStatic: true,
-    });
-    r_wall_th.scale = 2;
-    r_wall_th.setAngle(90);
-
-    //
-
-    const u_wall_one = this.matter.add.image(800, 25, "wall", undefined, {
-      isStatic: true,
-    });
-    u_wall_one.scale = 2;
-
-    const u_wall_two = this.matter.add.image(1600, 25, "wall", undefined, {
-      isStatic: true,
-    });
-    u_wall_two.scale = 2;
-
-    const u_wall_th = this.matter.add.image(2200, 25, "wall", undefined, {
-      isStatic: true,
-    });
-    u_wall_th.scale = 2;
-
-    //
-
-    const d_wall_one = this.matter.add.image(800, 2023, "wall", undefined, {
-      isStatic: true,
-    });
-    d_wall_one.scale = 2;
-
-    const d_wall_two = this.matter.add.image(1600, 2023, "wall", undefined, {
-      isStatic: true,
-    });
-    d_wall_two.scale = 2;
-
-    const d_wall_th = this.matter.add.image(2200, 2023, "wall", undefined, {
-      isStatic: true,
-    });
-    d_wall_th.scale = 2;
+    this.createWall(800, 2023, 0, 2);
+    this.createWall(1600, 2023, 0, 2);
+    this.createWall(2200, 2023, 0, 2);
 
     // Create player
     this.hero = this.matter.add.sprite(1600, 200, "hero", undefined, {
