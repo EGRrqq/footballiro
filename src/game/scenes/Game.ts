@@ -39,7 +39,7 @@ export class Game extends Scene {
   preload() {
     this.load.setPath("assets");
     this.load.image("wall", "platform.png");
-    this.load.image("trophy", "gold_trophy_32x32_2");
+    this.load.image("trophy", "gold_trophy_96x96_2.png");
     this.load.spritesheet("hero", "character_base_48x48.png", {
       frameWidth: 48,
       frameHeight: 48,
@@ -54,7 +54,7 @@ export class Game extends Scene {
     // Create controls
     this.cursors = this.input.keyboard!.createCursorKeys();
 
-    // Create platforms
+    // Create walls
     this.createWall(400, 50, 90, 2);
     this.createWall(400, 1150, 90, 2);
     this.createWall(400, 2250, 90, 2);
@@ -71,8 +71,13 @@ export class Game extends Scene {
     this.createWall(1600, 2023, 0, 2);
     this.createWall(2200, 2023, 0, 2);
 
+    // Create trophy
+    const trophy = this.matter.add.image(1500, 600, "trophy", undefined, {
+      isStatic: true,
+    });
+
     // Create player
-    this.hero = this.matter.add.sprite(1600, 200, "hero", undefined, {
+    this.hero = this.matter.add.sprite(1500, 200, "hero", undefined, {
       chamfer: { radius: 12 }, // Optional: Rounded corners
     });
     this.hero.setFixedRotation(); // Prevent character rotation on collision
