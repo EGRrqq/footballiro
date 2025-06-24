@@ -11,7 +11,9 @@ export class Game extends Scene {
 
   private trophy: Phaser.Physics.Matter.Image;
   private interactText: Phaser.GameObjects.Text;
+  private victoryText: Phaser.GameObjects.Text;
   private interactKey: Phaser.Input.Keyboard.Key;
+  private isVictory = false;
 
   // Constants
   private readonly VELOCITY = 10;
@@ -47,6 +49,13 @@ export class Game extends Scene {
       .setDepth(1000)
       .setScale(1.5);
 
+    // Show and animate victory text
+    this.victoryText
+      .setPosition(this.cameras.main.centerX, this.cameras.main.centerY)
+      .setVisible(true)
+      .setAlpha(0)
+      .setScale(0.1);
+
     // Animate the trophy collection
     this.tweens.add({
       targets: effect,
@@ -55,7 +64,43 @@ export class Game extends Scene {
       scale: 2,
       duration: 500,
       ease: "Cubic.easeOut",
-      onComplete: () => effect.destroy(),
+      onComplete: () => {
+        this.isVictory = true;
+        effect.destroy();
+
+        // Create modal overlay (semi-transparent black background)
+        this.add
+          .rectangle(
+            0,
+            0,
+            this.cameras.main.width,
+            this.cameras.main.height,
+            0x000000,
+            0.5
+          )
+          .setOrigin(0)
+          .setDepth(1900) // Below victory text but above everything else
+          .setScrollFactor(0);
+
+        this.tweens.add({
+          targets: this.victoryText,
+          alpha: 1,
+          scale: 1.2,
+          duration: 800,
+          ease: "Bounce.easeOut",
+          onComplete: () => {
+            // Add pulsating effect after initial animation
+            this.tweens.add({
+              targets: this.victoryText,
+              scale: 1.4,
+              yoyo: true,
+              repeat: -1,
+              duration: 1000,
+              ease: "Sine.easeInOut",
+            });
+          },
+        });
+      },
     });
 
     // Remove the actual trophy
@@ -91,6 +136,7 @@ export class Game extends Scene {
   }
 
   private handleMovement() {
+    if (this.isVictory) return;
     // Create movement vector
     const movement = new Phaser.Math.Vector2(0, 0);
 
@@ -175,6 +221,27 @@ export class Game extends Scene {
       .setDepth(1000) // Ensure it's on top
       .setVisible(false)
       .setOrigin(0.5, 1); // Center bottom origin
+
+    // Create interact text
+    this.victoryText = this.add
+      .text(0, 0, "VICTORY", {
+        fontSize: "bold 128px",
+        fontFamily: "Arial",
+        color: "#F9885B",
+        stroke: "#000000",
+        strokeThickness: 6,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: "#000000",
+          blur: 2,
+          stroke: true,
+        },
+      })
+      .setOrigin(0.5)
+      .setDepth(2000) // Higher depth than trophy effect
+      .setVisible(false)
+      .setScrollFactor(0); // Fixed position on screen
 
     // Create interact key
     this.interactKey = this.input.keyboard!.addKey(
