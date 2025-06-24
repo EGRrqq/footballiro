@@ -59,6 +59,39 @@ export class Game extends Scene {
     }
   }
 
+  private handleMovement() {
+    // Create movement vector
+    const movement = new Phaser.Math.Vector2(0, 0);
+
+    // Apply direction inputs to vector
+    if (this.cursors.left?.isDown) movement.x -= 1;
+    if (this.cursors.right?.isDown) movement.x += 1;
+    if (this.cursors.up?.isDown) movement.y -= 1;
+    if (this.cursors.down?.isDown) movement.y += 1;
+
+    // Handle movement
+    if (movement.length() > 0) {
+      // Normalize and scale vector for consistent diagonal speed
+      movement.normalize().scale(this.VELOCITY);
+
+      // Apply velocity
+      this.hero.setVelocity(movement.x, movement.y);
+
+      // Determine primary direction for animation (prioritize horizontal)
+      if (movement.x < 0) this.direction = "left";
+      else if (movement.x > 0) this.direction = "right";
+      else if (movement.y < 0) this.direction = "up";
+      else if (movement.y > 0) this.direction = "down";
+
+      this.hero.anims.play(this.direction, true);
+    }
+    // Handle idle state
+    else {
+      this.hero.setVelocity(0, 0);
+      this.hero.anims.play(`turn_${this.direction[0]}`, true);
+    }
+  }
+
   // Load assets
   preload() {
     this.load.setPath("assets");
@@ -151,37 +184,7 @@ export class Game extends Scene {
 
   // Update = requestAnimationFrame
   update(): void {
-    // Create movement vector
-    const movement = new Phaser.Math.Vector2(0, 0);
-
-    // Apply direction inputs to vector
-    if (this.cursors.left?.isDown) movement.x -= 1;
-    if (this.cursors.right?.isDown) movement.x += 1;
-    if (this.cursors.up?.isDown) movement.y -= 1;
-    if (this.cursors.down?.isDown) movement.y += 1;
-
-    // Handle movement
-    if (movement.length() > 0) {
-      // Normalize and scale vector for consistent diagonal speed
-      movement.normalize().scale(this.VELOCITY);
-
-      // Apply velocity
-      this.hero.setVelocity(movement.x, movement.y);
-
-      // Determine primary direction for animation (prioritize horizontal)
-      if (movement.x < 0) this.direction = "left";
-      else if (movement.x > 0) this.direction = "right";
-      else if (movement.y < 0) this.direction = "up";
-      else if (movement.y > 0) this.direction = "down";
-
-      this.hero.anims.play(this.direction, true);
-    }
-    // Handle idle state
-    else {
-      this.hero.setVelocity(0, 0);
-      this.hero.anims.play(`turn_${this.direction[0]}`, true);
-    }
-
+    this.handleMovement();
     this.handleTrophyInteraction();
   }
 }
