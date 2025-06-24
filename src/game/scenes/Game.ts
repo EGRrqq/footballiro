@@ -8,6 +8,8 @@ export class Game extends Scene {
   private hero: Phaser.Physics.Matter.Sprite;
   private direction: Direction = "down";
   private camera: Phaser.Cameras.Scene2D.Camera;
+  private trophy: Phaser.Physics.Matter.Image;
+  private interactText: Phaser.GameObjects.Text;
 
   // Constants
   private readonly VELOCITY = 10;
@@ -15,6 +17,7 @@ export class Game extends Scene {
     w: 3072,
     h: 2048,
   };
+  private readonly INTERACT_DISTANCE = 150;
 
   constructor() {
     super("Game");
@@ -33,6 +36,27 @@ export class Game extends Scene {
     wall.scale = scale;
 
     return wall;
+  }
+
+  private handleTrophyInteraction() {
+    if (!this.trophy) return;
+
+    // Calculate distance between hero and trophy
+    const distance = Phaser.Math.Distance.Between(
+      this.hero.x,
+      this.hero.y,
+      this.trophy.x,
+      this.trophy.y
+    );
+
+    // Position and show/hide text based on distance
+    if (distance < this.INTERACT_DISTANCE) {
+      // Position text above characters head
+      this.interactText.setPosition(this.hero.x, this.hero.y - 40);
+      this.interactText.setVisible(true);
+    } else {
+      this.interactText.setVisible(false);
+    }
   }
 
   // Load assets
@@ -72,9 +96,21 @@ export class Game extends Scene {
     this.createWall(2200, 2023, 0, 2);
 
     // Create trophy
-    const trophy = this.matter.add.image(1500, 600, "trophy", undefined, {
+    this.trophy = this.matter.add.image(1500, 600, "trophy", undefined, {
       isStatic: true,
     });
+
+    // Create interact text
+    this.interactText = this.add
+      .text(0, 0, "Press X", {
+        fontSize: "bold 26px",
+        color: "#FFFFFF",
+        backgroundColor: "#000000CC",
+        padding: { x: 10, y: 5 },
+      })
+      .setDepth(1000) // Ensure it's on top
+      .setVisible(false)
+      .setOrigin(0.5, 1); // Center bottom origin
 
     // Create player
     this.hero = this.matter.add.sprite(1500, 200, "hero", undefined, {
@@ -145,5 +181,7 @@ export class Game extends Scene {
       this.hero.setVelocity(0, 0);
       this.hero.anims.play(`turn_${this.direction[0]}`, true);
     }
+
+    this.handleTrophyInteraction();
   }
 }
