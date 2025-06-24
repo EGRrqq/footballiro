@@ -5,13 +5,13 @@ type Direction = "left" | "right" | "up" | "down";
 
 export class Game extends Scene {
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-  private hero: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  private hero: Phaser.Physics.Matter.Sprite;
   private direction: Direction = "down";
-  private platforms: Phaser.Physics.Arcade.StaticGroup;
+  private platforms: Phaser.Physics.Matter.Image[] = [];
   private camera: Phaser.Cameras.Scene2D.Camera;
 
   // Constants
-  private readonly VELOCITY = 600;
+  private readonly VELOCITY = 10;
   private readonly BOUNDS = {
     w: 3072,
     h: 2048,
@@ -34,19 +34,23 @@ export class Game extends Scene {
   // Static
   create() {
     // Set physics world bounds
-    this.physics.world.setBounds(0, 0, this.BOUNDS.w, this.BOUNDS.h);
+    this.matter.world.setBounds(0, 0, this.BOUNDS.w, this.BOUNDS.h);
 
     // Create controls
     this.cursors = this.input.keyboard!.createCursorKeys();
 
     // Create platforms
-    this.platforms = this.physics.add.staticGroup();
-    this.platforms.create(400, 700, "ground").setScale(2).refreshBody();
+    const platform = this.matter.add.image(400, 700, "ground", undefined, {
+      isStatic: true, // Makes platform immovable
+    });
+    platform.setScale(2);
+    this.platforms.push(platform);
 
     // Create player
-    this.hero = this.physics.add.sprite(2048, 1024, "hero");
-    this.hero.setBounce(0.2);
-    this.hero.setCollideWorldBounds(true);
+    this.hero = this.matter.add.sprite(2048, 1024, "hero", undefined, {
+      chamfer: { radius: 12 }, // Optional: Rounded corners
+    });
+    this.hero.setFixedRotation(); // Prevent character rotation on collision
 
     // Create camera
     this.camera = this.cameras.main;
@@ -76,9 +80,6 @@ export class Game extends Scene {
         frameRate: 10,
       });
     });
-
-    // Add collisions
-    this.physics.add.collider(this.hero, this.platforms);
   }
 
   // Update = requestAnimationFrame
@@ -96,6 +97,8 @@ export class Game extends Scene {
     if (movement.length() > 0) {
       // Normalize and scale vector for consistent diagonal speed
       movement.normalize().scale(this.VELOCITY);
+
+      // Apply velocity
       this.hero.setVelocity(movement.x, movement.y);
 
       // Determine primary direction for animation (prioritize horizontal)
