@@ -59,6 +59,7 @@ export class Game extends Scene {
     this.camera.setBounds(0, 0, this.BOUNDS.w, this.BOUNDS.h);
     this.camera.roundPixels = true;
     this.camera.setDeadzone(25, 25);
+    this.camera.setLerp(0.1, 0.1);
 
     // Store animations data
     const animsData = [
